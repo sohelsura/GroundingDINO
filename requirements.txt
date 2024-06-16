@@ -8,3 +8,7 @@ numpy
 opencv-python
 supervision
 pycocotools
+fastapi
+uvicorn
+segment-anything
+aiohttp
