@@ -7,7 +7,7 @@ from typing import List
 import uuid
 import aiohttp
 from io import BytesIO
-from function import hair_mask, auto_crop, head_mask, generate_hair_mask
+from function import hair_mask, auto_crop, head_mask, generate_hair_mask, generate_preson_box_mask, generate_inverted_mask
 from pydantic import BaseModel
 from io import BytesIO
 from PIL import Image
@@ -151,6 +151,50 @@ async def cutout_hair_mask_endpoint(base64_image: Base64Image):
         return mask_base64
     except Exception as e:
         raise HTTPException(status_code=400, detail=f"Invalid base64 string: {e}")
+
+
+
+@app.post("/generate-person-box-mask/")
+async def person_box_mask_endpoint(base64_image: Base64Image):
+    try:
+        image_io = decode_base64_image(base64_image.base64_string)
+        image_path = f"{UPLOAD_DIR}/{str(uuid.uuid4())}.png"
+        with open(image_path, "wb") as f:
+            f.write(image_io.getvalue())
+        
+        person_box_path = generate_preson_box_mask(image_path)
+
+        with open(person_box_path, "rb") as mask_file:
+            mask_base64 = base64.b64encode(mask_file.read()).decode('utf-8')
+
+        os.remove(image_path)
+        os.remove(person_box_path)
+
+        return mask_base64
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=f"Invalid base64 string: {e}")
+
+
+@app.post("/generate-inverted-mask/")
+async def inverted_mask_endpoint(base64_image: Base64Image):
+    try:
+        image_io = decode_base64_image(base64_image.base64_string)
+        image_path = f"{UPLOAD_DIR}/{str(uuid.uuid4())}.png"
+        with open(image_path, "wb") as f:
+            f.write(image_io.getvalue())
+        
+        inverted_mask_path = generate_inverted_mask(image_path)
+
+        with open(inverted_mask_path, "rb") as mask_file:
+            mask_base64 = base64.b64encode(mask_file.read()).decode('utf-8')
+
+        os.remove(image_path)
+        os.remove(inverted_mask_path)
+
+        return mask_base64
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=f"Invalid base64 string: {e}")
+
 
 
 if __name__ == "__main__":

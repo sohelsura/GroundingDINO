@@ -220,3 +220,43 @@ def generate_hair_mask(source_image_path: str) -> str:
     mask_pil.save(mask_path)
 
     return mask_path
+
+
+
+def generate_preson_box_mask(source_image_path: str) -> str:
+
+    load_grounding_dino_model()
+
+    CLASSES = ['person']
+    BOX_THRESHOLD = 0.37
+    TEXT_THRESHOLD = 0.25
+
+    image = cv2.imread(source_image_path)
+
+    detections = grounding_dino_model.predict_with_classes(
+        image=image,
+        classes=enhance_class_name(class_names=CLASSES),
+        box_threshold=BOX_THRESHOLD,
+        text_threshold=TEXT_THRESHOLD
+    )
+    
+    for x1, y1, x2, y2 in detections.xyxy:
+        x1, y1, x2, y2 = int(x1), int(y1), int(x2), int(y2)
+        mask = np.zeros_like(image, dtype=np.uint8)
+        cv2.rectangle(mask, (x1, y1), (x2, y2), (255, 255, 255), thickness=cv2.FILLED)
+
+        cutout = image[y1:y2, x1:x2]
+        
+    mask_path = f"{current_directory}/uploads/{str(uuid.uuid4())}.png"
+
+    cv2.imwrite(mask_path,mask)
+
+    return mask_path
+
+def generate_inverted_mask(source_image_path: str) -> str:
+    
+    image = cv2.imread(source_image_path)
+    inverted_image = cv2.bitwise_not(image)
+    mask_path = f"{current_directory}/uploads/{str(uuid.uuid4())}.png"
+    cv2.imwrite(mask_path,inverted_image)
+    return mask_path
